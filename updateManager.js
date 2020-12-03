@@ -25,15 +25,53 @@ const Indicator = Me.imports.indicator;
 const Monitors = Me.imports.monitors;
 const Prefs = Me.imports.prefs;
 const Utils = Me.imports.utils;
-
+/* TODO i18n */
 const Gettext = imports.gettext.domain('apt-update-indicator');
 const _ = Gettext.gettext;
 
 /* Options */
-const STOCK_CHECK_CMD  = '/usr/bin/pkcon refresh';
-const STOCK_UPDATE_CMD = '/usr/bin/gnome-software --mode updates';
+
+/* Default commands for APT Backend */
+const STOCK_CHECK_CMD_APT  = '/usr/bin/pkcon refresh';
+const STOCK_UPDATE_CMD_APT = '/usr/bin/gnome-software --mode updates';
+
+/* Default commands for Pacman/AUR Backend */
+const STOCK_CHECK_CMD_PAC  = '/usr/bin/checkupdates ;';
+const STOCK_UPDATE_CMD_PAC = 'sudo pacman -Syu ;';
+
+/* THIS is a WorkInProgress/P.O.C./personal learning project with primary Goal of adding pacman / aur without breaking pkcon/apt if possible. Secondary goals : vulnerabilities highlighting, pacdiff etc.. */
+
+const STOCK_CUSTOM_REPO_CMD = 'aur repo --repo-list | head -1' /*ForNow... settings pref for which are TBI*/ 
+
+/* Only Installed/(foreign should we?) pkgs */  /* [[ -x $(/usr/bin/which aur)]] && */
+const STOCK_CHECK_CMD_AUR  = ' /usr/bin/pacman -Sl $(aur repo --repo-list | head -1) | grep installed | awk '{print $2" "$3}' | /usr/bin/aur vercmp && /usr/bin/pacman -Qm | /usr/bin/aur vercmp ' ;
+
+/* Only NON Installed pkgs... This is not for "normal" updates but will be in another menu expander TODO again, as scripts ? also can use --print-format for -S (not -Q) */
+const STOCK_CHECK_CMD_AUR_REPO = ' /usr/bin/pacman -Sl $(aur repo --repo-list | head -1) | grep -v installed | awk '{print $2" "$3}' | /usr/bin/aur vercmp ' ; /* TODO Handle no/several custom repo */
+/* Only if vercmp-devel exists (see man aurvcs) */ /* [[ -x $(/usr/bin/which aur-vercmp-devel)]] */ 
+/* const STOCK_CHECK_CMD_AUR_DEVEL =' /usr/bin/grep -Fxf <(/usr/bin/pacman -Slq $(aur repo --repo-list | head -1) | /usr/bin/cut -d:\' f1 ) <(/usr/bin/aur vercmp-devel | /usr/bin/cut -d: -f1)';*/ 
+
+/* ABANDONED */
+/* const STOCK_CHECK_CMD_AUR  = '/usr/bin/grep -Fxf <(/usr/bin/paclist ' + CUSTOM_REPO + ') <(/usr/bin/aur repo -d ' + CUSTOM_REPO + ' --list) | /usr/bin/aur vercmp && /usr/bin/pacman -Qm | /usr/bin/aur vercmp && /usr/bin/grep -Fxf <(/usr/bin/paclist ' + CUSTOM_REPO + ' | /usr/bin/cut -d:\' \'-f1 ) <(/usr/bin/aur vercmp-devel | /usr/bin/cut -d: -f1) ';*/
+/*PITA TODO settings for supporting more custom repos / try to autodetect in pacman.conf ? no, ask aur repo */
+
+const STOCK_UPDATE_CMD_AUR_VCS = '/usr/bin/grep -Fxf <(/usr/bin/paclist ' + CUSTOM_REPO + ' | /usr/bin/cut -d: -f1 ) <(/usr/bin/aur vercmp-devel | /usr/bin/cut -d: -f1)';;
+const STOCK_UPDATE_CMD_AUR = '/usr/bin/gnome-software --mode updates';
+
+/* if not in separate submenus ? or just concatenate?
+const STOCK_UPDATE/CHECK_CMD_PACAUR='/bin/bash -c "/usr/bin/checkupdates; /usr/bin/grep -Fxf <(/usr/bin/pacman -Qq) <(/usr/bin/aur repo -d noarCustom --list) | /usr/bin/aur vercmp && /usr/bin/pacman -Qm | /usr/bin/aur vercmp && /usr/bin/grep -Fxf <(/usr/bin/pacman -Qq) <(/usr/bin/aur vercmp-devel | /usr/bin/cut -d: -f1)"' */
+
+/* TODO proper rename and add prefs reset to different backend/customrepo later: */
+/* If customrepo(TBI via STOCK_CUSTOM_REPO_CMD) : const?? STOCK_CHECK_CMD  = STOCK_CHECK_CMD_PAC + ' && ' + STOCK_CHECK_CMD_AUR */
+/*   If customrepodevel(TBI) STOCK_CHECK_CMD  += STOCK_CHECK_CMD_AUR_DEVEL */
+
+
+const STOCK_CHECK_CMD  = STOCK_CHECK_CMD_PAC;
+const STOCK_UPDATE_CMD = 'echo blah';
+
 let CHECK_CMD          = STOCK_CHECK_CMD;
 let UPDATE_CMD         = STOCK_UPDATE_CMD;
+
 
 /* Various packages statuses */
 const SCRIPT = Indicator.SCRIPT;
